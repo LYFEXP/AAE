@@ -1,12 +1,10 @@
-import { createClient } from '@supabase/supabase-js';
+const { createClient } = require("@supabase/supabase-js");
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
+function supabaseAdmin() {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE;
+  if (!url || !key) throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE");
+  return createClient(url, key);
 }
 
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
-
-export default supabaseAdmin;
+module.exports = { supabaseAdmin };
