@@ -1,24 +1,39 @@
-// /api/content/generate.js
+import { supabaseAdmin } from "../_lib/supabaseAdmin.js";
+
 export default async function handler(req, res) {
-  // --- CORS headers ---
+  // CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-
-  // Preflight
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
 
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Use POST with JSON { topic, offer }" });
+    return res.status(405).json({ error: "Use POST with JSON { topic, offer, platform? }" });
   }
 
-  // Body is parsed by Vercel when Content-Type: application/json
-  const { topic = "AI tool", offer = "Example Offer" } = req.body || {};
+  try {
+    const { topic = "AI tool", offer = "Example Offer", platform = "tiktok" } = req.body || {};
 
-  return res.status(200).json({
-    script: `Hook: ${topic} is exploding. 3 reasons it matters → [benefit 1], [benefit 2], [benefit 3]. Try ${offer} today.`,
-    caption: `Quick breakdown of ${topic}. Link in bio. #ai #tools #trending`,
-  });
+    // mock "AI" output (swap to real OpenAI later)
+    const script  = `Hook: ${topic} is exploding. 3 reasons it matters → [benefit 1], [benefit 2], [benefit 3]. Try ${offer} today.`;
+    const caption = `Quick breakdown of ${topic}. Link in bio. #ai #tools #trending`;
+
+    // save to DB
+    const supa = supabaseAdmin();
+    const { data, error } = await supa
+      .from("trend_logs")
+      .insert({ keyword: topic, caption, script, platform })
+      .select("id")
+      .single();
+
+    if (error) {
+      console.error("Supabase insert error:", error);
+      return res.status(500).json({ error: "DB_INSERT_FAILED" });
+    }
+
+    return res.status(200).json({ script, caption, saved: true, trend_id: data?.id ?? null });
+  } catch (e) {
+    console.error(e);
+    return res.status(400).json({ error: "BAD_REQUEST" });
+  }
 }
