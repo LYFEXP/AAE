@@ -1,7 +1,6 @@
-import { supabaseAdmin } from "../_lib/supabaseAdmin.js";
+const { supabaseAdmin } = require("../_lib/supabaseAdmin.js");
 
-export default async function handler(req, res) {
-  // CORS
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
@@ -14,11 +13,9 @@ export default async function handler(req, res) {
   try {
     const { topic = "AI tool", offer = "Example Offer", platform = "tiktok" } = req.body || {};
 
-    // mock "AI" output (swap to real OpenAI later)
     const script  = `Hook: ${topic} is exploding. 3 reasons it matters → [benefit 1], [benefit 2], [benefit 3]. Try ${offer} today.`;
     const caption = `Quick breakdown of ${topic}. Link in bio. #ai #tools #trending`;
 
-    // save to DB
     const supa = supabaseAdmin();
     const { data, error } = await supa
       .from("trend_logs")
@@ -33,7 +30,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({ script, caption, saved: true, trend_id: data?.id ?? null });
   } catch (e) {
-    console.error(e);
-    return res.status(400).json({ error: "BAD_REQUEST" });
+    console.error("GEN_ERR", e);
+    return res.status(500).json({ error: "FUNCTION_RUNTIME_ERROR" });
   }
-}
+};
